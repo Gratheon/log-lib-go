@@ -44,12 +44,6 @@ func TestNewDefaultLevel(t *testing.T) {
 	assert.Equal(t, logrus.InfoLevel, instance.GetLevel())
 }
 
-func TestNewLokiDisabled(t *testing.T) {
-	disabled := false
-	instance := New(LoggerConfig{Loki: &LokiConfig{Enabled: &disabled}})
-	assert.Len(t, instance.Hooks, 0)
-}
-
 func TestNewOtlpEnabled(t *testing.T) {
 	instance := New(LoggerConfig{Otlp: &OtlpConfig{Endpoint: "http://collector:4318", Service: "svc"}})
 	assert.Len(t, instance.Hooks[logrus.InfoLevel], 1)

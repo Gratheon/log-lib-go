@@ -17,16 +17,6 @@ const (
 	LogLevelError LogLevel = "error"
 )
 
-type LokiConfig struct {
-	URL      string
-	Username string
-	Password string
-	TenantID string
-	Service  string
-	Labels   map[string]string
-	Enabled  *bool
-}
-
 type OtlpConfig struct {
 	Endpoint           string
 	Headers            map[string]string
@@ -37,7 +27,6 @@ type OtlpConfig struct {
 
 type LoggerConfig struct {
 	Otlp     *OtlpConfig
-	Loki     *LokiConfig
 	LogLevel LogLevel
 }
 
@@ -157,64 +146,6 @@ func parseKeyValueList(raw string) map[string]string {
 		values[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
 	}
 	return values
-}
-
-func resolveLokiConfig(cfg LoggerConfig) *LokiConfig {
-	if cfg.Loki == nil {
-		if strings.TrimSpace(os.Getenv("LOKI_URL")) == "" {
-			return nil
-		}
-		cfg.Loki = &LokiConfig{}
-	}
-
-	enabled := true
-	if cfg.Loki.Enabled != nil {
-		enabled = *cfg.Loki.Enabled
-	}
-	if !enabled {
-		return nil
-	}
-
-	service := strings.TrimSpace(cfg.Loki.Service)
-	if service == "" {
-		service = strings.TrimSpace(os.Getenv("SERVICE_NAME"))
-	}
-	if service == "" {
-		service = strings.TrimSpace(os.Getenv("COMPOSE_SERVICE"))
-	}
-	if service == "" {
-		service = strings.TrimSpace(os.Getenv("npm_package_name"))
-	}
-	if service == "" {
-		service = filepath.Base(mustGetwd())
-	}
-
-	url := strings.TrimSpace(cfg.Loki.URL)
-	if url == "" {
-		url = strings.TrimSpace(os.Getenv("LOKI_URL"))
-	}
-	if url == "" {
-		url = "http://loki:3100/loki/api/v1/push"
-	}
-
-	labels := map[string]string{
-		"service": service,
-		"env":     envOrDefault("ENV_ID", "unknown"),
-		"logger":  "log-lib-go",
-	}
-	for k, v := range cfg.Loki.Labels {
-		labels[k] = v
-	}
-
-	return &LokiConfig{
-		URL:      url,
-		Username: cfg.Loki.Username,
-		Password: cfg.Loki.Password,
-		TenantID: cfg.Loki.TenantID,
-		Service:  service,
-		Labels:   labels,
-		Enabled:  &enabled,
-	}
 }
 
 func envOrDefault(key, fallback string) string {

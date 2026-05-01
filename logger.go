@@ -128,9 +128,6 @@ func buildLogger(config LoggerConfig) *logrus.Logger {
 	if otlpCfg := resolveOtlpConfig(config); otlpCfg != nil {
 		instance.AddHook(newOtlpTarget(*otlpCfg))
 	}
-	if lokiCfg := resolveLokiConfig(config); lokiCfg != nil {
-		instance.AddHook(newLokiTarget(*lokiCfg))
-	}
 
 	return instance
 }

@@ -4,13 +4,12 @@ Reusable Go logging library for Gratheon services with colored console output an
 
 ## Version
 
-`LibraryVersion` is `2.0.0`, the ClickStack/OTLP major release. Loki remains available, but it is only enabled when `LOKI_URL` or `LoggerConfig.Loki` is set.
+`LibraryVersion` is `2.0.0`, the ClickStack/OTLP major release. Loki support has been removed.
 
 ## Features
 
 - Colored console logger for `info`, `warn`, `error`, and `debug`
 - Optional OTLP HTTP JSON log export
-- Optional Loki compatibility transport
 - Request/context correlation helpers (`req_id`, `user_id`)
 - `chi` request logging middleware support
 - Backward-compatible package-level API (`Info`, `Error`, etc.)
