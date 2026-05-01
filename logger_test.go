@@ -49,3 +49,13 @@ func TestNewLokiDisabled(t *testing.T) {
 	instance := New(LoggerConfig{Loki: &LokiConfig{Enabled: &disabled}})
 	assert.Len(t, instance.Hooks, 0)
 }
+
+func TestNewOtlpEnabled(t *testing.T) {
+	instance := New(LoggerConfig{Otlp: &OtlpConfig{Endpoint: "http://collector:4318", Service: "svc"}})
+	assert.Len(t, instance.Hooks[logrus.InfoLevel], 1)
+}
+
+func TestNormalizeOtlpLogsEndpoint(t *testing.T) {
+	assert.Equal(t, "http://collector:4318/v1/logs", normalizeOtlpLogsEndpoint("http://collector:4318"))
+	assert.Equal(t, "http://collector:4318/v1/logs", normalizeOtlpLogsEndpoint("http://collector:4318/v1/logs"))
+}

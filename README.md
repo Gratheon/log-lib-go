@@ -1,20 +1,29 @@
 # log-lib-go
 
-Reusable Go logging library for Gratheon services.
+Reusable Go logging library for Gratheon services with colored console output and optional OTLP log export to ClickStack/OpenTelemetry collectors.
+
+## Version
+
+`LibraryVersion` is `2.0.0`, the ClickStack/OTLP major release. Loki remains available, but it is only enabled when `LOKI_URL` or `LoggerConfig.Loki` is set.
 
 ## Features
 
-- Colored console logger (info/warn/error/debug)
-- Optional Loki target (`LOKI_URL` or explicit config)
+- Colored console logger for `info`, `warn`, `error`, and `debug`
+- Optional OTLP HTTP JSON log export
+- Optional Loki compatibility transport
 - Request/context correlation helpers (`req_id`, `user_id`)
 - `chi` request logging middleware support
 - Backward-compatible package-level API (`Info`, `Error`, etc.)
 
-## Install
+## ClickStack Setup
 
 ```bash
-go get github.com/Gratheon/log-lib-go
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+OTEL_SERVICE_NAME=swarm-api
+OTEL_RESOURCE_ATTRIBUTES=deployment.environment.name=dev,service.namespace=gratheon
 ```
+
+The library sends logs to `/v1/logs`, so either a collector base endpoint or a full logs endpoint works.
 
 ## Usage
 
@@ -26,25 +35,18 @@ import logger "github.com/Gratheon/log-lib-go"
 func main() {
 	logger.Configure(logger.LoggerConfig{
 		LogLevel: logger.LogLevelInfo,
-		Loki: &logger.LokiConfig{
-			Enabled: boolPtr(true),
-			URL:     "http://loki:3100/loki/api/v1/push",
-			Service: "swarm-api",
-			Labels: map[string]string{
-				"team": "platform",
+		Otlp: &logger.OtlpConfig{
+			Endpoint: "http://localhost:4318",
+			Service:  "swarm-api",
+			ResourceAttributes: map[string]string{
+				"deployment.environment.name": "dev",
 			},
 		},
 	})
 
 	logger.Info("service started")
+	logger.Warn("slow request", map[string]interface{}{"route": "/graphql", "duration_ms": 830})
 }
-
-func boolPtr(v bool) *bool { return &v }
 ```
 
-## Loki behavior
-
-- Loki is optional.
-- If `Loki` config is omitted and `LOKI_URL` is unset, only console logging is used.
-- Delivery is fire-and-forget and never blocks request handling.
-- `debug` logs are not shipped to Loki (console only), matching `log-lib` behavior.
+Trace correlation is supported when log fields include `trace_id`/`traceId` and `span_id`/`spanId`.
