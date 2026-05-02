@@ -26,6 +26,7 @@ func New(config LoggerConfig) *logrus.Logger {
 }
 
 func Configure(config LoggerConfig) *logrus.Logger {
+	configureTracing(config)
 	instance := buildLogger(config)
 	mu.Lock()
 	global = instance
@@ -97,6 +98,7 @@ func ErrorWithRequest(r *http.Request, message string) {
 	if userID, ok := r.Context().Value("userID").(string); ok {
 		fields["user_id"] = userID
 	}
+	addTraceContextFields(fields, r.Context())
 	active().WithFields(fields).Error(message)
 }
 
@@ -108,6 +110,7 @@ func ErrorWithContext(ctx context.Context, message string) {
 	if userID, ok := ctx.Value("userID").(string); ok {
 		fields["user_id"] = userID
 	}
+	addTraceContextFields(fields, ctx)
 	active().WithFields(fields).Error(message)
 }
 

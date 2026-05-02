@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const LibraryVersion = "2.0.0"
+const LibraryVersion = "2.1.0"
 
 type LogLevel string
 
@@ -27,6 +27,7 @@ type OtlpConfig struct {
 
 type LoggerConfig struct {
 	Otlp     *OtlpConfig
+	Traces   *OtlpConfig
 	LogLevel LogLevel
 }
 
@@ -130,6 +131,14 @@ func normalizeOtlpLogsEndpoint(endpoint string) string {
 		return endpoint
 	}
 	return endpoint + "/v1/logs"
+}
+
+func normalizeOtlpTracesEndpoint(endpoint string) string {
+	endpoint = strings.TrimRight(strings.TrimSpace(endpoint), "/")
+	if strings.HasSuffix(endpoint, "/v1/traces") {
+		return endpoint
+	}
+	return endpoint + "/v1/traces"
 }
 
 func parseKeyValueList(raw string) map[string]string {

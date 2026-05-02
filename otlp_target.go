@@ -12,6 +12,7 @@ import (
 	otellog "go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type otlpTarget struct {
@@ -69,8 +70,32 @@ func (o *otlpTarget) Fire(entry *logrus.Entry) error {
 	record.SetBody(otellog.StringValue(entry.Message))
 	record.AddAttributes(attrs...)
 
-	o.logger.Emit(context.Background(), record)
+	o.logger.Emit(contextFromTraceFields(entry.Data), record)
 	return nil
+}
+
+func contextFromTraceFields(fields logrus.Fields) context.Context {
+	traceID, _ := fields["trace_id"].(string)
+	if traceID == "" {
+		traceID, _ = fields["traceId"].(string)
+	}
+	spanID, _ := fields["span_id"].(string)
+	if spanID == "" {
+		spanID, _ = fields["spanId"].(string)
+	}
+
+	parsedTraceID, traceErr := trace.TraceIDFromHex(traceID)
+	parsedSpanID, spanErr := trace.SpanIDFromHex(spanID)
+	if traceErr != nil || spanErr != nil {
+		return context.Background()
+	}
+
+	spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: parsedTraceID,
+		SpanID:  parsedSpanID,
+		Remote:  true,
+	})
+	return trace.ContextWithSpanContext(context.Background(), spanContext)
 }
 
 func severity(level logrus.Level) otellog.Severity {

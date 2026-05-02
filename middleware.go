@@ -37,6 +37,7 @@ func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
 		fields["req_id"] = reqID
 	}
+	addTraceContextFields(fields, r.Context())
 
 	entry.Logger = entry.Logger.WithFields(fields)
 	return entry
