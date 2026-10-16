@@ -53,21 +53,21 @@ func (o *otlpTarget) Fire(entry *logrus.Entry) error {
 		return nil
 	}
 
-	attrs := make([]otellog.KeyValue, 0, len(entry.Data)+1)
+	attrs := make([]attribute.KeyValue, 0, len(entry.Data)+1)
 	for k, v := range entry.Data {
 		if isTraceField(k) {
 			continue
 		}
 		attrs = append(attrs, otlpAttribute(k, v))
 	}
-	attrs = append(attrs, otellog.String("log.logger", "log-lib-go"))
+	attrs = append(attrs, attribute.String("log.logger", "log-lib-go"))
 
 	var record otellog.Record
 	record.SetTimestamp(entry.Time)
 	record.SetObservedTimestamp(time.Now())
 	record.SetSeverity(severity(entry.Level))
 	record.SetSeverityText(strings.ToUpper(entry.Level.String()))
-	record.SetBody(otellog.StringValue(entry.Message))
+	record.SetBody(attribute.StringValue(entry.Message))
 	record.AddAttributes(attrs...)
 
 	o.logger.Emit(contextFromTraceFields(entry.Data), record)
@@ -111,24 +111,24 @@ func severity(level logrus.Level) otellog.Severity {
 	}
 }
 
-func otlpAttribute(key string, value interface{}) otellog.KeyValue {
+func otlpAttribute(key string, value interface{}) attribute.KeyValue {
 	switch v := value.(type) {
 	case nil:
-		return otellog.String(key, "")
+		return attribute.String(key, "")
 	case string:
-		return otellog.String(key, v)
+		return attribute.String(key, v)
 	case bool:
-		return otellog.Bool(key, v)
+		return attribute.Bool(key, v)
 	case int:
-		return otellog.Int(key, v)
+		return attribute.Int(key, v)
 	case int64:
-		return otellog.Int64(key, v)
+		return attribute.Int64(key, v)
 	case float64:
-		return otellog.Float64(key, v)
+		return attribute.Float64(key, v)
 	case float32:
-		return otellog.Float64(key, float64(v))
+		return attribute.Float64(key, float64(v))
 	default:
-		return otellog.String(key, fmt.Sprintf("%v", v))
+		return attribute.String(key, fmt.Sprintf("%v", v))
 	}
 }
 
